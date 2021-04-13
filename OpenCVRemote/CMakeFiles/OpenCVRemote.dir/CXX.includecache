@@ -1,0 +1,30 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/root/OpenCVRemote/main.cpp
+opencv/cv.h
+-
+opencv/highgui.h
+-
+boost/circular_buffer.hpp
+-
+sys/stat.h
+-
+fstream
+-
+curl/curl.h
+-
+time.h
+-
+iostream
+-
+tuple
+-
+chrono
+-
+

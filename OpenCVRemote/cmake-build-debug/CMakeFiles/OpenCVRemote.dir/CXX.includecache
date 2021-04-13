@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/tmp/tmp.tnMvX8aphT/main.cpp
+iostream
+-
+unistd.h
+-
+cstring
+-
+opencv2/opencv.hpp
+-
+
