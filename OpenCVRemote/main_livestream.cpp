@@ -56,28 +56,6 @@ int capture_frames(string url){
     return 0;
 }
 
-/*   while True:
-    ret, frame = cap.read()
-
-    cv2.imshow('frame', frame)
-    if cv2.waitKey(1) and 0xFF == ord('q'):
-
-        frame_im = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        pil_im = Image.fromarray(frame_im)
-        stream = StringIO()
-        pil_im.save(stream, format="JPEG")
-        stream.seek(0)
-        img_for_post = stream.read()    
-        files = {'image': img_for_post}
-        response = requests.post(
-            url='/api/path-to-your-endpoint/',
-            files=files
-        )
-
-        break
-
-cap.release()
-cv2.destroyAllWindows()*/
 
 int send_frames(string ip){
     string url;
@@ -88,14 +66,50 @@ int send_frames(string ip){
         url = ip;
     }
     
-    FILE *log = fopen("libcurl_log.txt", "wb");
+    //initialize some of the libcurl functionality globally (do ONCE)
+    //TODO: curl_global_init(CURL_GLOBAL_ALL); //initialize all known internal sub modules
     
-    struct curl_httppost *header = NULL; // initializing header to NULL is required per libcurl documentation
+    //EASY INTERFACE
+    //EASY HANDLE -- use one handle for every thread you plan to use for transferring
+    // -- never share the same handle in multiple threads
+    CURL *curl = curl_easy_init();
+    
+    if (curl) {
+        //set properties and options for this handle
+        //how the tranfers will be made
+        //url identifies a remote resource -- rtsp url -- video
+        curl_easy_setopt(curl, CURLOPT_URL, server_url.c_str());
+
+        //pass all data to this function: capture_frames
+        //curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, capture_frames);
+
+        //control data
+        //curl_easy_setopt(easyhandle, CURLOPT_WRITEDATA, &internal_struct);
+
+        //upload data to remote site
+        //1-curl_easy_setopt(curl, CURLOPT_URL, server_url.c_str());
+        //2-curl_easy_setopt(easyhandle, CURLOPT_READFUNCTION, read_function);
+        //3-curl_easy_setopt(easyhandle, CURLOPT_UPLOAD, 1L);
+
+        //connect to remote site, do stuff and receive the transfer
+        response = curl_easy_perform(curl);
+        /* Check for errors */
+        if (response != CURLE_OK)
+            fprintf(stderr, "curl_easy_perform() failed: %s\n",
+                curl_easy_strerror(response));
+
+        // as per libcurl documentation it is imperative to clean all the object used
+        curl_easy_cleanup(curl);
+        curl_formfree(header);
+        curl_slist_free_all(headerlist);
+    }
+
+    //HTTP requests needs headers
+    /*struct curl_httppost *header = NULL; // initializing header to NULL is required per libcurl documentation
     struct curl_httppost *lastptr = NULL;
     struct curl_slist *headerlist = NULL;
     static const char buf[] =  "Expect:"; // request begins with "Expect: "
 
-    curl_global_init(CURL_GLOBAL_ALL);
 
     // set up the header
     curl_formadd(&header,
@@ -117,77 +131,14 @@ int send_frames(string ip){
         CURLFORM_BUFFERLENGTH, contents.size(),
         CURLFORM_END);
 
-
-    //init curl object
-    CURL *curl = curl_easy_init();
-
-
     headerlist = curl_slist_append(headerlist, buf);
-    if (curl) {
-        //define url
-        curl_easy_setopt(curl, CURLOPT_URL, server_url.c_str());
-        
-        //appending header to request
-        curl_easy_setopt(curl, CURLOPT_HTTPPOST, header);
-        // send the request, receive response
-        response = curl_easy_perform(curl);
-        /* Check for errors */
-        if (response != CURLE_OK)
-            fprintf(stderr, "curl_easy_perform() failed: %s\n",
-                curl_easy_strerror(response));
+    */
+ 
 
-        // as per libcurl documentation it is imperative to clean all the object used
-        curl_easy_cleanup(curl);
-        curl_formfree(header);
-        curl_slist_free_all(headerlist);
-    }
+    //TODO: curl_global_cleanup(); //ONCE
 
     return 0;
 }
-
-/*void dump_to_video(circular_buffer<Mat> frame_buffer, int frame_width, int frame_height, int fps){
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    //receives the frame buffer and several settings
-    //dumps everything into an .avi file and sends it
-    std::tuple<String, String> inf = read_accident_id();
-    
-
-    String accident_id = get<0>(inf);
-    String ip = get<1>(inf);
-
-    
-    cout << accident_id << endl;
-    cout << ip << endl;
-    
-    String accident_id_file = accident_id + ".avi";
-    
-
-    cout << fps << endl;      
-
-    VideoWriter video(accident_id_file, CV_FOURCC('D','I','V','X'),fps, Size(frame_width, frame_height));
-    for(Mat i : frame_buffer){
-        video.write(i);
-    }
-    video.release();
-    
-    remove("/tmp/flag");
-    cout << "done dumping video" << endl;
-
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end-begin;
-    std::cout << "Creating the video: " << elapsed_seconds.count() << "s\n";
-
-
-    std::chrono::steady_clock::time_point begin2 = std::chrono::steady_clock::now();
-
-    send_file(accident_id, ip, accident_id_file);
-    remove(accident_id.c_str());
-
-    std::chrono::steady_clock::time_point end2 = std::chrono::steady_clock::now();
-    std::chrono::duration<double> elapsed_seconds2 = end2-begin2;
-    std::cout << "Uploading the video: " << elapsed_seconds2.count() << "s\n";
-    
-}*/
 
 static void show_usage(std::string name){
     std::cerr << "Usage:  " << name << " <option(s)>\n"
